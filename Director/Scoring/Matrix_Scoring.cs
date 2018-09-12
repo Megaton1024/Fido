@@ -29,7 +29,52 @@ namespace Fido_Main.Director.Scoring
 {
   static class Matrix_Scoring
   {
-    public static FidoReturnValues GetDetectorsScore(FidoReturnValues lFidoReturnValues)
+        void ScoreVirusTotalHash(FidoReturnValues lFidoReturnValues)
+        {
+            lFidoReturnValues.ThreatScore += GetMpsVTHashThreatScore(lFidoReturnValues);
+
+            //score VirusTotal URL
+            if ((lFidoReturnValues.FireEye.VirusTotal != null) &&
+                (lFidoReturnValues.FireEye.VirusTotal.URLReturn != null) &&
+                (lFidoReturnValues.FireEye.VirusTotal.URLReturn.Count > 0))
+            {
+                Console.WriteLine(@"Scoring FireEye/VirusTotal detector URL information.");
+                var iVTPositiveUrlReturns = VirusTotalPosReturnURL(lFidoReturnValues.FireEye.VirusTotal);
+                if ((iVTPositiveUrlReturns[0] > 0) || (iVTPositiveUrlReturns[1] > 0))
+                {
+                    lFidoReturnValues.ThreatScore += VirusTotalScore(iVTPositiveUrlReturns, false);
+                }
+            }
+        }
+
+        void ScoreVirusTotalIP(FidoReturnValues lFidoReturnValues)
+        {
+            if ((lFidoReturnValues.FireEye.VirusTotal != null) &&
+                (lFidoReturnValues.FireEye.VirusTotal.IPReturn != null) &&
+                (lFidoReturnValues.FireEye.VirusTotal.IPReturn.Count > 0))
+            {
+                Console.WriteLine(@"Scoring Cyphort/VirusTotal detector IP information.");
+                var iVTPositiveIPReturns = VirusTotalPosIPReturn(lFidoReturnValues.FireEye.VirusTotal);
+                if ((iVTPositiveIPReturns[0] > 0) || (iVTPositiveIPReturns[1] > 0) || (iVTPositiveIPReturns[2] > 0))
+                {
+                    lFidoReturnValues.ThreatScore += VirusTotalIPScore(iVTPositiveIPReturns);
+                }
+            }
+        }
+
+        void ScoreAlienVaultThreatFeed(FidoReturnValues lFidoReturnValues)
+        {
+            if ((lFidoReturnValues.FireEye.AlienVault != null) &&
+                (lFidoReturnValues.FireEye.AlienVault.Activity != null))
+            {
+                Console.WriteLine(@"Scoring FireEye/AlienVault IP information.");
+                lFidoReturnValues.ThreatScore += AlienVaultScore(lFidoReturnValues.FireEye.AlienVault);
+            }
+        }
+
+
+
+        public static FidoReturnValues GetDetectorsScore(FidoReturnValues lFidoReturnValues)
     {
       //This section will iterate through each detector and then score each threatfeed.
       //todo: refractor each threatfeed so it's not done inside this area.
@@ -66,43 +111,9 @@ namespace Fido_Main.Director.Scoring
           break;
 
         case "mps":
-
-          //score VirusTotal hash
-          lFidoReturnValues.ThreatScore += GetMpsVTHashThreatScore(lFidoReturnValues);
-
-          //score VirusTotal URL
-          if ((lFidoReturnValues.FireEye.VirusTotal != null) &&
-              (lFidoReturnValues.FireEye.VirusTotal.URLReturn != null) &&
-              (lFidoReturnValues.FireEye.VirusTotal.URLReturn.Count > 0))
-          {
-            Console.WriteLine(@"Scoring FireEye/VirusTotal detector URL information.");
-            var iVTPositiveUrlReturns = VirusTotalPosReturnURL(lFidoReturnValues.FireEye.VirusTotal);
-            if ((iVTPositiveUrlReturns[0] > 0) || (iVTPositiveUrlReturns[1] > 0))
-            {
-              lFidoReturnValues.ThreatScore += VirusTotalScore(iVTPositiveUrlReturns, false);
-            }
-          }
-
-          //score VirusTotal IP
-          if ((lFidoReturnValues.FireEye.VirusTotal != null) &&
-              (lFidoReturnValues.FireEye.VirusTotal.IPReturn != null) &&
-              (lFidoReturnValues.FireEye.VirusTotal.IPReturn.Count > 0))
-          {
-            Console.WriteLine(@"Scoring Cyphort/VirusTotal detector IP information.");
-            var iVTPositiveIPReturns = VirusTotalPosIPReturn(lFidoReturnValues.FireEye.VirusTotal);
-            if ((iVTPositiveIPReturns[0] > 0) || (iVTPositiveIPReturns[1] > 0) || (iVTPositiveIPReturns[2] > 0))
-            {
-              lFidoReturnValues.ThreatScore += VirusTotalIPScore(iVTPositiveIPReturns);
-            }
-          }
-
-          //score Alienvault threat feed
-          if ((lFidoReturnValues.FireEye.AlienVault != null) &&
-              (lFidoReturnValues.FireEye.AlienVault.Activity != null))
-          {
-            Console.WriteLine(@"Scoring FireEye/AlienVault IP information.");
-            lFidoReturnValues.ThreatScore += AlienVaultScore(lFidoReturnValues.FireEye.AlienVault);
-          }
+                    ScoreVirusTotalHash(lFidoReturnValues);
+                    ScoreVirusTotalIP(lFidoReturnValues);
+                    ScoreAlienVaultThreatFeed(lFidoReturnValues);
           break;
 
         case "cyphortv2":
